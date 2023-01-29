@@ -11,25 +11,16 @@
         <label>Twitter account name:</label>
         <input type="text"  name="inpstring">
         <input type="submit" value="GO">
-      </form>
+    </form>
     
     <br>
     {% if inpstring %}
       <p>Twitter account chosen: {{ inpstring }}</p>
     {% endif %}
     <br>
+    
+    {{table|safe}}
 
-    <form method="POST">
-      <label for="select-chart">Select Chart:</label>
-      <select id="select-chart" name="chart_name">
-        {% for chart in charts %}
-          <option value="{{ chart }}">{{ chart }}</option>
-        {% endfor %}
-      </select>
-      <input type="submit" value="GO">
-    </form>
-    {% if chart_name %}
-      <img src="{{ url_for('display_chart', chart_name=chart_name) }}" alt="chart">
-    {% endif %}
+
   </body>
 </html>
