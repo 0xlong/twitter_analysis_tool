@@ -6,12 +6,35 @@
   <body style="background-color:powderblue;">
     <h1>My Matplotlib Chart</h1>
     <br>
-
+    
     <form method="POST">
-        <label>Twitter account name:</label>
-        <input type="text"  name="inpstring">
-        <input type="submit" value="GO">
+      <label>Twitter account name:</label>
+      <input type="text"  name="twitter_username">
+      <input type="submit" value="GO">
     </form>
+
+
+    {% if twitter_username %}
+    Available tokens for {{twitter_username}}:
+    {% endif %}
+
+    <br>
+    
+    <form method="post">
+    
+      <select name="dropdown_choice">
+        {% for choice in choices %}
+        <option value="{{ choice }}">{{ choice }}</option>
+        {% endfor %}
+      </select>
+      <input type="submit" value="Filter">
+      
+    </form>
+   
+    <br>
+    <br>
+    
+    
     
     <br>
     {% if inpstring %}
@@ -19,7 +42,9 @@
     {% endif %}
     <br>
     
+    
     {{table|safe}}
+    
 
 
   </body>
