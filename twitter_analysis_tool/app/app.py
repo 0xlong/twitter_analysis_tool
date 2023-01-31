@@ -8,6 +8,8 @@ import pandas as pd
 import json
 import helper_functions as hf
 from flask import Flask
+import plotly
+import plotly.express as px
 
 app = Flask(__name__)
 app.debug = True
@@ -27,25 +29,27 @@ def index():
     
     unique_symbols = list(dict.fromkeys([x.upper() for x in sum(list([d[2] for d in alltweets]), [])]))
     
-    selected_coin = unique_symbols[0]
-
+    
+    chart = hf.token_tweets_mentions_graph('CAW', 150, hf.find_all_tweets_with_symbol(tweets_df, '$'))
+    
+    print(chart.to_html())
+    
+    
+    
     if request.method == 'POST':
-        
-        twitter_username = request.form['twitter_username']
-        print(f"Twitter username received: {twitter_username}")
         
         
         # Get token from dropdown list based on user front-end choice
         selected_coin = request.form['dropdown_choice']
-        print(f"selected_coin: {selected_coin}")
+
         # Filter df based on the user choice
         filtered_df = tweets_df[tweets_df['text'].str.lower().str.contains(selected_coin.lower(), na=False)]
     
         # Return rendered page with filtere df, pass options list to dropdown menu and filtered df to table variable
-        return render_template("index.html", choices = unique_symbols, table=filtered_df.to_html(), twitter_username=twitter_username)
+        return render_template("index.html", choices = unique_symbols, table=filtered_df.to_html(), chart = chart.to_html())
 
     # If no choice return full dataframe
-    return render_template('index.html', choices = unique_symbols, table=tweets_df.to_html(), twitter_username=twitter_username)
+    return render_template('index.html', choices = unique_symbols, table=tweets_df.to_html(), chart=chart.to_html())
     
 
 if __name__ == "__main__":

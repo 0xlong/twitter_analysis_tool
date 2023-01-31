@@ -1,7 +1,9 @@
 import tweepy
 import re
 import json
-
+import plotly.express as px
+import requests
+import pandas as pd
 
 
 def twitter_auth(choice=['user','app']):
@@ -86,3 +88,66 @@ def find_all_tweets_with_symbol(tweets_df, symbol):
     return symbol_tweets
 
 #find_all_tweets_with_symbol(tweets_df.text,'$')
+
+
+# This function finds token name (coin_id) based on symbol given - 'CAW' will return 'a-hunters-dream'
+def find_token_symbol(token_name):
+    
+    # Get table of coins with maaping to symbols from coingecko
+    response_list = requests.get(f'https://api.coingecko.com/api/v3/coins/list')
+    coins_list = json.loads(response_list.text)
+    
+    # Get coin name based on symbol given
+    for c in coins_list:
+        if c['symbol']==token_name.lower():
+            return(c['id'])
+
+# collect only tweets where desired token is mentioned and return tweets date
+def specific_token_tweets(token_name, tweets_list):
+    tweets_with_specific_token = []        
+    for i in tweets_list:
+        if token_name in i[2]:
+            #print(i[0], " - ", i[1].strftime("%Y-%m-%d %H:%M"),'UTC')
+            tweets_with_specific_token.append([i[1].strftime("%Y-%m-%d %H:%M"),i[0]])
+    return tweets_with_specific_token
+
+#specific_token_tweets('CAW', alltweets)
+
+def token_tweets_mentions_graph(token_name, days_back, only_tweets_with_token_symbol):
+
+    import plotly.express as px
+
+
+    token_coingecko_name = find_token_symbol(token_name)
+
+    # Get CAW data from CoinGecko API
+    url = f"https://api.coingecko.com/api/v3/coins/{token_coingecko_name}/market_chart?vs_currency=usd&days={days_back}"
+    data = requests.get(url).json()
+    df = pd.DataFrame(data['prices'], columns=['timestamp', 'price'])
+    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+
+    # Define dates and labels for vertical lines
+    tweets_dates = [i[0] for i in specific_token_tweets(token_name, only_tweets_with_token_symbol)]
+    tweets_dates_labels = [i[1] for i in specific_token_tweets(token_name, only_tweets_with_token_symbol)]
+
+
+    # Plot the price chart and add vertical lines with labels
+    fig = px.line(df, x='timestamp', y='price')
+
+    for d, l in zip(tweets_dates, tweets_dates_labels):
+        
+        fig.add_shape(type='line', x0=d, x1=d, y0=0, y1=1, xref='x', yref='paper',
+                    line=dict(color='red', width=3), layer='above')
+        
+        fig.add_annotation(x=d, y=1.4, xref='x', yref='paper', text=d, textangle=-90,
+                        showarrow=False, font=dict(color='red', size=10), hovertext=f"{l}: {d}")
+
+
+    fig.update_layout(margin=dict(l=100, r=100, t=120, b=50), yaxis=dict(tickformat='e'), xaxis=dict(title=None),
+                      title={'text': f"Price of {token_name} and corresponding tweets mentioned from ...", 'y':0.03, 'x':0.5} )
+    fig.show()
+    return fig
+
+    
+# If searching for CAW token with price action of 150 days from todays date and tweets_df with tweets for given token 'CAW' (last parameter)
+# token_tweets_mentions_graph('CAW', 150, find_all_tweets_with_symbol(tweets_df, '$'))
