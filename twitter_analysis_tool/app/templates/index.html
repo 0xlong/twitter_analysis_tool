@@ -1,55 +1,24 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <title>My Matplotlib Chart</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <title>Twitter Mentions</title>
   </head>
   <body style="background-color:powderblue;">
     <h1>My Matplotlib Chart</h1>
     <br>
     
+
+
     <form method="POST">
       <label>Twitter account name:</label>
       <input type="text"  name="twitter_username">
       <input type="submit" value="GO">
     </form>
-
-
-    {% if twitter_username %}
-    Available tokens for {{twitter_username}}:
-    {% endif %}
-
-    <br>
-    
-    <form method="post">
-    
-      <select name="dropdown_choice">
-        {% for choice in choices %}
-        <option value="{{ choice }}">{{ choice }}</option>
-        {% endfor %}
-      </select>
-      <input type="submit" value="Filter">
-      
-    </form>
-   
     <br>
     <br>
     
-    
-    
-    <br>
-    {% if inpstring %}
-      <p>Twitter account chosen: {{ inpstring }}</p>
-    {% endif %}
-  
-  <br>    
-  <div id="chart">
-    {{ chart|safe }}
-  </div>
-  <br>
-  <table>
-    {{table|safe}}
-  </table>
 
   </body>
 </html>

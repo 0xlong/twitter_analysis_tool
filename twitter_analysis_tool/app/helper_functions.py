@@ -4,7 +4,7 @@ import json
 import plotly.express as px
 import requests
 import pandas as pd
-
+from datetime import datetime
 
 def twitter_auth(choice=['user','app']):
 
@@ -30,12 +30,16 @@ def twitter_auth(choice=['user','app']):
         return api_app
 
 
-def get_tweets(twitter_api, tweeter_user, tweets):
+def get_tweets(twitter_api, tweeter_user):
+   
+   
+    # Check if twitter user exist
+    # ........................
+    # ........................
    
     # Count total number of tweets account has published to retrieve from
     user = twitter_api.get_user(screen_name=tweeter_user)
     max_user_tweets = user.statuses_count
-    print(max_user_tweets)
 
     # List for storing all tweets
     all_tweets = []
@@ -54,7 +58,7 @@ def get_tweets(twitter_api, tweeter_user, tweets):
         
     return all_tweets
 
-#all_tweets = get_tweets('CryptoTubylec')
+#all_tweets = get_tweets(app,'CryptoTubylec')
 
 
 def save_tweets_in_json(username, tweets):
@@ -63,7 +67,7 @@ def save_tweets_in_json(username, tweets):
         json.dump(tweets_json, file)
         
     
-def make_tweeets_dataset(tweets_dataframe_raw):
+def make_tweets_dataset(tweets_dataframe_raw):
     return tweets_dataframe_raw[['created_at','id','text','entities','retweet_count','favorite_count']]
     
     #from pandas.io.json import json_normalize
@@ -74,20 +78,20 @@ def make_tweeets_dataset(tweets_dataframe_raw):
 def find_all_tweets_with_symbol(tweets_df, symbol):
     #@tweets_df - tweets df processed, where one column, called text, contains tweets text
     
-    symbol_tweets = []
+    symbols_tweets = []
 
     for index, row in tweets_df.iterrows():
         
         # Look for a tweet text containing symbol
         found = re.findall('\\'+symbol+'\\w+', row.text)
-        
+        #print(found)
         # If symbol found in tweet
         if found != []:
-            symbol_tweets.append([row.id, row.created_at, [x.strip(symbol) for x in found]])
+            symbols_tweets.append([row.id, row.created_at, [x.strip(symbol) for x in found], row.text])
     
-    return symbol_tweets
+    return symbols_tweets
 
-#find_all_tweets_with_symbol(tweets_df.text,'$')
+#find_all_tweets_with_symbol(tweets_df,'$')[0]
 
 
 # This function finds token name (coin_id) based on symbol given - 'CAW' will return 'a-hunters-dream'
@@ -103,21 +107,30 @@ def find_token_symbol(token_name):
             return(c['id'])
 
 # collect only tweets where desired token is mentioned and return tweets date
+# collect only tweets where desired token is mentioned and return tweets date
 def specific_token_tweets(token_name, tweets_list):
     tweets_with_specific_token = []        
     for i in tweets_list:
         if token_name in i[2]:
             #print(i[0], " - ", i[1].strftime("%Y-%m-%d %H:%M"),'UTC')
-            tweets_with_specific_token.append([i[1].strftime("%Y-%m-%d %H:%M"),i[0]])
+            tweets_with_specific_token.append([i[1].strftime("%Y-%m-%d %H:%M"),i[0], i[3]])
     return tweets_with_specific_token
 
 #specific_token_tweets('CAW', alltweets)
 
-def token_tweets_mentions_graph(token_name, days_back, only_tweets_with_token_symbol):
+
+def token_tweets_mentions_graph(token_name, only_tweets_with_token_symbol):
 
     import plotly.express as px
+    
+    # Define dates and labels for vertical lines
+    tweets_dates = [i[0] for i in specific_token_tweets(token_name, only_tweets_with_token_symbol)]
+    tweets_dates_labels = [i[2] for i in specific_token_tweets(token_name, only_tweets_with_token_symbol)]
 
+    # How many days back phas to be retrieved from API price chart
+    days_back = (datetime.now() - datetime.strptime(tweets_dates[-1], "%Y-%m-%d %H:%M")).days+7
 
+    # Replacing symbol with actual token name from coingecko API
     token_coingecko_name = find_token_symbol(token_name)
 
     # Get CAW data from CoinGecko API
@@ -125,10 +138,6 @@ def token_tweets_mentions_graph(token_name, days_back, only_tweets_with_token_sy
     data = requests.get(url).json()
     df = pd.DataFrame(data['prices'], columns=['timestamp', 'price'])
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-
-    # Define dates and labels for vertical lines
-    tweets_dates = [i[0] for i in specific_token_tweets(token_name, only_tweets_with_token_symbol)]
-    tweets_dates_labels = [i[1] for i in specific_token_tweets(token_name, only_tweets_with_token_symbol)]
 
 
     # Plot the price chart and add vertical lines with labels
@@ -145,9 +154,8 @@ def token_tweets_mentions_graph(token_name, days_back, only_tweets_with_token_sy
 
     fig.update_layout(margin=dict(l=100, r=100, t=120, b=50), yaxis=dict(tickformat='e'), xaxis=dict(title=None),
                       title={'text': f"Price of {token_name} and corresponding tweets mentioned from ...", 'y':0.03, 'x':0.5} )
-    fig.show()
+    
     return fig
 
-    
 # If searching for CAW token with price action of 150 days from todays date and tweets_df with tweets for given token 'CAW' (last parameter)
 # token_tweets_mentions_graph('CAW', 150, find_all_tweets_with_symbol(tweets_df, '$'))

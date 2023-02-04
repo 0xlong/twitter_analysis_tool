@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <title>Twitter Mentions</title>
+  </head>
+  <body style="background-color:powderblue;">
+    <h1>{{twitter_username}} Twitter Token Mentions</h1>
+    <br>
+    
+      <label>Twitter account name: {{twitter_username}}</label>
+      <br><br>
+      <label>Selected token: {{xxx}}</label>
+    <br>
+    <br>
+    Other tokens
+    <br>
+    <form method="post">
+      <select name="dropdown_choice">
+        {% for choice in choices %}
+          <option value="{{ choice }}" {% if choice == selected_coin %}{choice}{% endif %}>{{ choice }}</option>
+        {% endfor %}
+      </select>
+      <input type="submit" value="Filter">
+    </form>
+
+
+    <br>
+
+  <br>    
+  <div id="chart">
+    {{chart|safe}}
+  </div>
+  <br>
+  <br>
+  <table>
+    {{table|safe}}
+  </table>
+
+  </body>
+</html>
